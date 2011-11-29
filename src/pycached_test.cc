@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "pycached.cc"
+#include "pycached_impl.cc"
 
 #define init\
   std::vector<std::string> host;\
@@ -21,6 +21,14 @@ TEST(operation, set){
   init;
   Client cl(host);
   cl.set("hoge", "fuge");
+}
+
+TEST(operation, nullstring){
+  init;
+  Client cl(host);
+  std::string value("a");
+  value[0] = '\0';
+  cl.set("hoge", value);
 }
 
 TEST(operation, add){

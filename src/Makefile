@@ -10,7 +10,7 @@ target:test_pycached
 test_pycached:pycached_test.o libgtest.a
 	$(CC) $^ $(OPTS) $(WARNS) -o $@ -lpthread
 	./$@ $(NOTIFY)
-pycached_test.o:pycached_test.cc pycached.cc
+pycached_test.o:pycached_test.cc pycached_impl.cc
 	$(CC) -c $< $(GTEST_INC) $(OPTS) $(WARNS) -o $@
 
 # gtest

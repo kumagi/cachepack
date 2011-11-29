@@ -171,7 +171,7 @@ public:
     }
   }
   void set(const std::string& key, const std::string& value){
-    this->_store("set", key.data(), value.data(), false);
+    this->_store("set", key.data(), value, false);
   }
   int add(const std::string& key, const std::string& value){
     return this->_store("add", key.data(), value.data(), false);
@@ -310,7 +310,7 @@ private:
     }
   }
   inline
-  bool _store(const char* command, const char* key, const char* value, const bool casflag){
+  bool _store(const char* command, const char* key, const std::string& value, const bool casflag){
     uint64_t cas_unique = 0;
     if(casflag){
       unique_map::const_iterator it = unique_numbers.find(key);
@@ -320,29 +320,31 @@ private:
         cas_unique = it->second;
       }
     }
-    const uint32_t valuelen = strlen(value);
+    const uint32_t valuelen = value.length();
     if(valuelen < 1024){ // TODO: this value should be optimized
       const int length = strlen(command) + strlen(key)
         + valuelen + strlen("  0 0 \r\n\r\n")
         + digits_in_decimal(valuelen) + (casflag ? digits_in_decimal(cas_unique) + 1: 0);
       char* const query = (char*)alloca(length + 1);
       const int query_length = casflag ?
-        snprintf(query, length + 1,"cas %s 0 0 %u %lu\r\n%s\r\n", key, valuelen, cas_unique, value) :
-        snprintf(query, length + 1,"%s %s 0 0 %u\r\n%s\r\n", command, key, valuelen, value);
+        snprintf(query, length + 1,"cas %s 0 0 %u %llu\r\n", key, valuelen, cas_unique) :
+        snprintf(query, length + 1,"%s %s 0 0 %u\r\n", command, key, valuelen);
+      memcpy(&query[query_length], value.c_str(), valuelen);
+      memcpy(&query[query_length + valuelen], "\r\n", 2);
       //printf("query is %s\n", query);
-      assert(query_length == length);
+      //assert(query_length == length);
       this->write(query, length);
-    }else{ // directry send from buffer without copy
+    }else{ // value is big, directry send from buffer without copy
       const int length = strlen(command) + strlen(key)
         + strlen("  0 0 \r\n\r\n")
         + digits_in_decimal(valuelen) + (casflag ? digits_in_decimal(cas_unique) + 1: 0);
       char* const query = (char*)alloca(length + 1);
       const int query_length = casflag ?
-        snprintf(query, length + 1,"cas %s 0 0 %u %lu\r\n", key, valuelen, cas_unique) :
+        snprintf(query, length + 1,"cas %s 0 0 %u %llu\r\n", key, valuelen, cas_unique) :
         snprintf(query, length + 1,"%s %s 0 0 %u\r\n", command, key, valuelen);
       assert(query_length == length);
       this->write(query, length);
-      this->write(value, valuelen);
+      this->write(value.c_str(), valuelen);
       this->write("\r\n", 2);
     }
     //std::cerr << "wrote." << std::endl;
