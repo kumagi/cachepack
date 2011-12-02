@@ -174,10 +174,10 @@ public:
     this->_store("set", key.data(), value, false);
   }
   int add(const std::string& key, const std::string& value){
-    return this->_store("add", key.data(), value.data(), false);
+    return this->_store("add", key.data(), value, false);
   }
   int cas(const std::string& key, const std::string& value){
-    return this->_store("cas", key.data(), value.data(), true);
+    return this->_store("cas", key.data(), value, true);
   }
   ~Client(){
     close(fd_);
@@ -422,7 +422,8 @@ private:
     char* const str = (char*)alloca(length+1);
     memcpy(str, head, length);
     str[length] = '\0';
-    return std::make_pair(boost::lexical_cast<uint64_t>(str), length);
+    //return std::make_pair(boost::lexical_cast<uint64_t>(str), length);
+    return std::make_pair(string_to_int(str), length);
   }
   inline
   static bool wait_for_timeout(int fd, int time_msec){
