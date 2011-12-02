@@ -19,7 +19,6 @@
 #include <stdexcept>
 #include <boost/unordered_map.hpp>
 #include <boost/optional.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
 #include <boost/range/value_type.hpp>
 class SocketException : public std::runtime_error {
@@ -107,6 +106,7 @@ public:
           return;
         }
       }else if(result == -1 && errno != 115){
+        perror("error");
         throw SocketException("could not connect. " + host);
       }
     }
@@ -422,16 +422,17 @@ private:
     char* const str = (char*)alloca(length+1);
     memcpy(str, head, length);
     str[length] = '\0';
-    //return std::make_pair(boost::lexical_cast<uint64_t>(str), length);
     return std::make_pair(string_to_int(str), length);
+    //return std::make_pair(boost::lexical_cast<uint64_t>(str), length);
   }
   inline
   static bool wait_for_timeout(int fd, int time_msec){
     const int epollfd = epoll_create(10);
     struct epoll_event ev, events[10];
-    ev.events = EPOLLIN | EPOLLRDHUP | EPOLLET;
+    ev.events = EPOLLOUT | EPOLLRDHUP | EPOLLET;
     ev.data.fd = fd;
     if (epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev) == -1) {
+      perror("epoll add");
     }
     int nfds = epoll_wait(epollfd, events, 10, time_msec);
     //std::cout << "epolled: " << nfds << std::endl;

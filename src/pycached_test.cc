@@ -3,7 +3,7 @@
 
 #define init\
   std::vector<std::string> host;\
-  host.push_back("127.0.0.1:11211");
+  host.push_back("182.48.52.238:11211");
 
 TEST(construct, test){
   init;
